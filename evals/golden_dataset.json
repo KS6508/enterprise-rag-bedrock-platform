@@ -1,0 +1,8 @@
+[
+  {
+    "source_name": "cloud_security_policy.md",
+    "document_text": "All production LLM inference requests must route through AWS Bedrock inside us-east-1 using IAM task roles. Static third-party API keys are strictly prohibited. Customer PII logs are retained for 30 days in encrypted S3 buckets before automatic deletion.",
+    "question": "How long are customer PII logs retained and where are they stored?",
+    "expected_output": "Customer PII logs are retained for 30 days in encrypted S3 buckets before automatic deletion [cloud_security_policy.md]."
+  }
+]

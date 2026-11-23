@@ -1,0 +1,29 @@
+name: Infrastructure & LLM Quality Gate
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  terraform-validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false && terraform validate
+  python-syntax-and-evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r app/requirements.txt
+      - run: python -c "from app.main import app; print('FastAPI app loaded successfully')"
+      - env:
+          RUN_LIVE_EVALS: ${{ vars.RUN_LIVE_EVALS || '' }}
+        run: pytest evals/
