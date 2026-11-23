@@ -20,6 +20,7 @@ class QueryRequest(BaseModel):
 def root():
     return {
         "service": "Enterprise Bedrock RAG Platform",
+        "vector_backend": rag_service.backend_type,
         "docs_url": "/docs",
         "health_url": "/health",
     }
@@ -27,14 +28,23 @@ def root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "index_ready": rag_service.vector_store is not None}
+    return {
+        "status": "ok",
+        "vector_backend": rag_service.backend_type,
+        "index_ready": rag_service.vector_store is not None or rag_service.backend_type == "pgvector",
+    }
 
 
 @app.post("/ingest")
 def ingest_document(payload: IngestRequest):
     try:
         chunks_created = rag_service.ingest_text(payload.source_name, payload.content)
-        return {"status": "ingested", "source": payload.source_name, "chunks": chunks_created}
+        return {
+            "status": "ingested",
+            "source": payload.source_name,
+            "chunks": chunks_created,
+            "vector_backend": rag_service.backend_type,
+        }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

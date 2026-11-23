@@ -1,29 +1,41 @@
 variable "aws_region" {
-  type    = string
-  default = "us-east-1"
+  description = "AWS region for Bedrock and application infrastructure"
+  type        = string
+  default     = "us-east-1"
 }
 
 variable "project_name" {
-  type    = string
-  default = "enterprise-rag-bedrock"
+  description = "Project prefix for resource naming"
+  type        = string
+  default     = "enterprise-rag-bedrock"
 }
 
 variable "environment" {
-  type    = string
-  default = "dev"
+  description = "Deployment environment"
+  type        = string
+  default     = "dev"
 }
 
 variable "bedrock_chat_model_id" {
-  type    = string
-  default = "us.anthropic.claude-sonnet-4-6"
+  description = "AWS Bedrock cross-region inference profile ID for Claude"
+  type        = string
+  default     = "us.anthropic.claude-sonnet-4-6"
 }
 
 variable "bedrock_embed_model_id" {
-  type    = string
-  default = "amazon.titan-embed-text-v2:0"
+  description = "AWS Bedrock embedding model ID"
+  type        = string
+  default     = "amazon.titan-embed-text-v2:0"
 }
 
 variable "enable_datadog" {
-  type    = bool
-  default = false
+  description = "Set to true when DD_API_KEY and DD_APP_KEY are configured to provision Datadog resources"
+  type        = bool
+  default     = false
+}
+
+variable "enable_rds" {
+  description = "Set to true to provision AWS RDS PostgreSQL (db.t4g.micro) for pgvector"
+  type        = bool
+  default     = false
 }
