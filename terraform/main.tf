@@ -1,5 +1,6 @@
 terraform {
   required_version = ">= 1.7.0"
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -31,31 +32,43 @@ resource "aws_ecr_repository" "rag_api" {
   name                 = "${var.project_name}-api"
   image_tag_mutability = "MUTABLE"
   force_delete         = true
-  image_scanning_configuration { scan_on_push = true }
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
 }
 
 resource "aws_iam_role" "rag_service_role" {
   name = "${var.project_name}-${var.environment}-service-role"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = { Service = ["ecs-tasks.amazonaws.com", "tasks.apprunner.amazonaws.com"] }
-    }]
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = ["ecs-tasks.amazonaws.com", "tasks.apprunner.amazonaws.com"]
+        }
+      }
+    ]
   })
 }
 
 resource "aws_iam_role_policy" "bedrock_least_privilege" {
   name = "${var.project_name}-bedrock-access"
   role = aws_iam_role.rag_service_role.id
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Sid    = "AllowBedrockInference"
         Effect = "Allow"
-        Action = ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"]
+        Action = [
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream"
+        ]
         Resource = [
           "arn:aws:bedrock:*::foundation-model/anthropic.*",
           "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/*",
@@ -63,9 +76,11 @@ resource "aws_iam_role_policy" "bedrock_least_privilege" {
         ]
       },
       {
-        Sid      = "AllowReadDatadogSecret"
-        Effect   = "Allow"
-        Action   = ["secretsmanager:GetSecretValue"]
+        Sid    = "AllowReadDatadogSecret"
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
         Resource = [aws_secretsmanager_secret.datadog_api_key.arn]
       }
     ]

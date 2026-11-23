@@ -19,12 +19,27 @@ Context:
 {context}
 """
 
+
 class EnterpriseRAGService:
     def __init__(self) -> None:
-        self.embeddings = BedrockEmbeddings(region_name=AWS_REGION, model_id=EMBED_MODEL_ID)
-        self.llm = ChatBedrockConverse(region_name=AWS_REGION, model=CHAT_MODEL_ID, temperature=0.0, max_tokens=1024)
+        self._embeddings: BedrockEmbeddings | None = None
+        self._llm: ChatBedrockConverse | None = None
         self.splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=120)
         self.vector_store: FAISS | None = None
+
+    @property
+    def embeddings(self) -> BedrockEmbeddings:
+        if self._embeddings is None:
+            self._embeddings = BedrockEmbeddings(region_name=AWS_REGION, model_id=EMBED_MODEL_ID)
+        return self._embeddings
+
+    @property
+    def llm(self) -> ChatBedrockConverse:
+        if self._llm is None:
+            self._llm = ChatBedrockConverse(
+                region_name=AWS_REGION, model=CHAT_MODEL_ID, temperature=0.0, max_tokens=1024
+            )
+        return self._llm
 
     def ingest_text(self, source_name: str, text: str) -> int:
         raw_doc = Document(page_content=text, metadata={"source": source_name})
@@ -37,7 +52,12 @@ class EnterpriseRAGService:
 
     def query(self, question: str, k: int = 3) -> Dict[str, Any]:
         if self.vector_store is None:
-            return {"answer": "No documents have been ingested yet. Call POST /ingest first.", "citations": [], "retrieved_contexts": [], "usage": {}}
+            return {
+                "answer": "No documents have been ingested yet. Call POST /ingest first.",
+                "citations": [],
+                "retrieved_contexts": [],
+                "usage": {},
+            }
 
         results = self.vector_store.similarity_search_with_score(question, k=k)
         context_blocks, raw_contexts, citations = [], [], []
@@ -65,5 +85,9 @@ class EnterpriseRAGService:
             "answer": response.content,
             "citations": citations,
             "retrieved_contexts": raw_contexts,
-            "usage": {"input_tokens": in_tokens, "output_tokens": out_tokens, "latency_ms": round(timer["elapsed_ms"], 2)},
+            "usage": {
+                "input_tokens": in_tokens,
+                "output_tokens": out_tokens,
+                "latency_ms": round(timer["elapsed_ms"], 2),
+            },
         }
